@@ -37,15 +37,22 @@ def get_product_links_current_category(html):
     return links
 
 
-def get_data_product(html):
+def get_data_product(link_list):
     """ Парсит карточку товара и возвращает список данных"""
+    data = []
 
-    soup = BS(html, 'lxml')
-    data = {
-        'product_title': soup.find('h1', class_="product_title").text.strip(),
-        'price': soup.find('p', class_="price").find('span', class_='woocommerce-Price-amount').text.strip(),
-        'made_in': soup.find('div', class_="madein").text.strip()
-    }
+    for link in link_list:
+        html = get_html(link)
+
+        soup = BS(html, 'lxml')
+
+        data.append(
+            {
+                'title': soup.find('h1', class_="product_title").text.strip(),
+                'price': soup.find('p', class_="price").find('span', class_='woocommerce-Price-amount').text.strip(),
+                'made_in': soup.find('div', class_="madein").text.strip()
+            }
+        )
 
     return data
 
@@ -53,22 +60,19 @@ def get_data_product(html):
 def write_to_csv(data):
     """ Запись данных в CSV файл"""
 
-    with open(CSV_FILE, 'a', newline='') as file:
-        writer = csv.writer(file, delimiter=';', quoting=csv.QUOTE_NONNUMERIC)
-
+    with open(CSV_FILE, 'w', newline='') as file:
+        writer = csv.writer(file, delimiter=';')
         writer.writerow(['Название', 'Цена', 'Производитель'])
-        writer.writerow(data.values())
+        for item in data:
+            writer.writerow([item['title'], item['price'], item['made_in']])
 
 
 def main():
     html = get_html(URL)
-
     link_list = get_product_links_current_category(html)
-    for link in link_list:
-        time.sleep(2)
-        html = get_html(link)
-        data = get_data_product(html)
-        write_to_csv(data)
+    data = get_data_product(link_list)
+    write_to_csv(data)
+    print(link_list)
 
 
 if __name__ == "__main__":
