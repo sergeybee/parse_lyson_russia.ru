@@ -4,9 +4,8 @@
 import requests
 from bs4 import BeautifulSoup as BS
 import csv
-import time
 
-CSV_FILE = "test.csv"
+CSV_FILE = "lyson_russia.csv"
 
 URL = 'https://lyson-russia.ru/product-category/uli/uli-iz-penopolistirola/10-ramok-dadan/'
 HEADERS = {
@@ -48,9 +47,11 @@ def get_data_product(link_list):
 
         data.append(
             {
+                'category': soup.find('nav', class_="woocommerce-breadcrumb").find_all('a')[-1].text,
                 'title': soup.find('h1', class_="product_title").text.strip(),
                 'price': soup.find('p', class_="price").find('span', class_='woocommerce-Price-amount').text.strip(),
-                'made_in': soup.find('div', class_="madein").text.strip()
+                'made_in': soup.find('div', class_="madein").text.strip(),
+                'link': link
             }
         )
 
@@ -62,9 +63,9 @@ def write_to_csv(data):
 
     with open(CSV_FILE, 'w', newline='') as file:
         writer = csv.writer(file, delimiter=';')
-        writer.writerow(['Название', 'Цена', 'Производитель'])
+        writer.writerow(['Категория', 'Название', 'Цена', 'Производитель', 'Ссылка'])
         for item in data:
-            writer.writerow([item['title'], item['price'], item['made_in']])
+            writer.writerow([item['category'], item['title'], item['price'], item['made_in'], item['link']])
 
 
 def main():
@@ -72,7 +73,6 @@ def main():
     link_list = get_product_links_current_category(html)
     data = get_data_product(link_list)
     write_to_csv(data)
-    print(link_list)
 
 
 if __name__ == "__main__":
